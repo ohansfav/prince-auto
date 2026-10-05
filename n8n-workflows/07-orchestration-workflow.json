@@ -1,0 +1,219 @@
+{
+  "name": "Healthcare Orchestration Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "patient-update",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Patient Data Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "patients",
+        "data": "={\n  \"patientId\": \"=uuid()\",\n  \"firstName\": \"={{$json.firstName}}\",\n  \"lastName\": \"={{$json.lastName}}\",\n  \"email\": \"={{$json.email}}\",\n  \"phone\": \"={{$json.phone}}\",\n  \"notes\": \"={{$json.notes}}\",\n  \"createdAt\": \"={{Date.now()}}\",\n  \"updatedAt\": \"={{Date.now()}}\"\n}"
+      },
+      "name": "Store Patient",
+      "type": "n8n-nodes-base.mongodb",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "path": "schedule-appointment",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Appointment Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 500]
+    },
+    {
+      "parameters": {
+        "url": "=http://localhost:5678/webhook/appointment",
+        "method": "POST",
+        "body": "={{$json}}"
+      },
+      "name": "Call Appointment Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 500]
+    },
+    {
+      "parameters": {
+        "path": "send-reminder",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Reminder Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 700]
+    },
+    {
+      "parameters": {
+        "url": "=http://localhost:5678/webhook/reminder",
+        "method": "POST",
+        "body": "={{$json}}"
+      },
+      "name": "Call Reminder Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 700]
+    },
+    {
+      "parameters": {
+        "path": "send-communication",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Communication Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 900]
+    },
+    {
+      "parameters": {
+        "url": "=http://localhost:5678/webhook/communicate",
+        "method": "POST",
+        "body": "={{$json}}"
+      },
+      "name": "Call Communication Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 900]
+    },
+    {
+      "parameters": {
+        "responseData": "={{$json}}"
+      },
+      "name": "Return Patient Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "responseData": "={{$json}}"
+      },
+      "name": "Return Appointment Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [650, 500]
+    },
+    {
+      "parameters": {
+        "responseData": "={{$json}}"
+      },
+      "name": "Return Reminder Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [650, 700]
+    },
+    {
+      "parameters": {
+        "responseData": "={{$json}}"
+      },
+      "name": "Return Communication Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [650, 900]
+    }
+  ],
+  "connections": {
+    "Patient Data Trigger": {
+      "main": [
+        [
+          {
+            "node": "Store Patient",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Patient": {
+      "main": [
+        [
+          {
+            "node": "Return Patient Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Appointment Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call Appointment Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Appointment Agent": {
+      "main": [
+        [
+          {
+            "node": "Return Appointment Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reminder Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call Reminder Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Reminder Agent": {
+      "main": [
+        [
+          {
+            "node": "Return Reminder Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Communication Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call Communication Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Communication Agent": {
+      "main": [
+        [
+          {
+            "node": "Return Communication Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

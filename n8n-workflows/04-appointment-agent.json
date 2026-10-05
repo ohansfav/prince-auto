@@ -1,0 +1,82 @@
+{
+  "name": "Appointment Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "appointment",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "appointments",
+        "data": "={\n  \"appointmentId\": \"=uuid()\",\n  \"patientId\": \"={{$json.patientId}}\",\n  \"doctorName\": \"={{$json.doctorName}}\",\n  \"appointmentDate\": \"={{$json.appointmentDate}}\",\n  \"appointmentTime\": \"={{$json.appointmentTime}}\",\n  \"status\": \"scheduled\",\n  \"notes\": \"={{$json.notes}}\",\n  \"createdAt\": \"={{Date.now()}}\"\n}"
+      },
+      "name": "Store Appointment",
+      "type": "n8n-nodes-base.mongodb",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "collection": "appointments",
+        "query": "={\"appointmentId\": \"={{$node[\"Store Appointment\"].json.appointmentId}}\"}"
+      },
+      "name": "Get Appointment Details",
+      "type": "n8n-nodes-base.mongodb",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "responseData": "={{$node[\"Get Appointment Details\"].json}}"
+      },
+      "name": "Return Appointment",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Store Appointment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Appointment": {
+      "main": [
+        [
+          {
+            "node": "Get Appointment Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Appointment Details": {
+      "main": [
+        [
+          {
+            "node": "Return Appointment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "name": "Reminder Database Setup",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "schema": [
+          {
+            "name": "reminderId",
+            "type": "string"
+          },
+          {
+            "name": "appointmentId",
+            "type": "string"
+          },
+          {
+            "name": "patientId",
+            "type": "string"
+          },
+          {
+            "name": "message",
+            "type": "string"
+          },
+          {
+            "name": "sentAt",
+            "type": "datetime"
+          },
+          {
+            "name": "deliveryStatus",
+            "type": "string"
+          },
+          {
+            "name": "followUpStatus",
+            "type": "string"
+          },
+          {
+            "name": "channel",
+            "type": "string"
+          }
+        ],
+        "collectionName": "reminders"
+      },
+      "name": "Create Reminder Collection",
+      "type": "n8n-nodes-base.mongodb",
+      "typeVersion": 1,
+      "position": [450, 300]
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Create Reminder Collection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

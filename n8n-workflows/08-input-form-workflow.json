@@ -1,0 +1,275 @@
+{
+  "name": "Doctor Input Form",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "doctor-form",
+        "method": "GET",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "formDescription": "Healthcare Management System - Doctor Input Form",
+        "formFields": [
+          {
+            "fieldType": "dropdown",
+            "fieldLabel": "Select Action",
+            "fieldName": "actionType",
+            "fieldOptions": [
+              "Add Patient",
+              "Schedule Appointment",
+              "Send Reminder",
+              "Send Communication"
+            ],
+            "fieldRequired": true
+          },
+          {
+            "fieldType": "text",
+            "fieldLabel": "Patient First Name",
+            "fieldName": "patientFirstName",
+            "fieldRequired": true
+          },
+          {
+            "fieldType": "text",
+            "fieldLabel": "Patient Last Name",
+            "fieldName": "patientLastName",
+            "fieldRequired": true
+          },
+          {
+            "fieldType": "email",
+            "fieldLabel": "Patient Email",
+            "fieldName": "patientEmail",
+            "fieldRequired": true
+          },
+          {
+            "fieldType": "text",
+            "fieldLabel": "Patient Phone",
+            "fieldName": "patientPhone",
+            "fieldRequired": true
+          },
+          {
+            "fieldType": "textarea",
+            "fieldLabel": "Patient Notes",
+            "fieldName": "patientNotes",
+            "fieldRequired": false
+          },
+          {
+            "fieldType": "text",
+            "fieldLabel": "Doctor Name",
+            "fieldName": "doctorName",
+            "fieldRequired": false
+          },
+          {
+            "fieldType": "date",
+            "fieldLabel": "Appointment Date",
+            "fieldName": "appointmentDate",
+            "fieldRequired": false
+          },
+          {
+            "fieldType": "time",
+            "fieldLabel": "Appointment Time",
+            "fieldName": "appointmentTime",
+            "fieldRequired": false
+          },
+          {
+            "fieldType": "dropdown",
+            "fieldLabel": "Communication Channel",
+            "fieldName": "communicationChannel",
+            "fieldOptions": [
+              "email",
+              "sms"
+            ],
+            "fieldRequired": false
+          },
+          {
+            "fieldType": "textarea",
+            "fieldLabel": "Message",
+            "fieldName": "messageContent",
+            "fieldRequired": false
+          }
+        ]
+      },
+      "name": "Configure Form",
+      "type": "n8n-nodes-base.formWaitingTrigger",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.actionType}}",
+              "value2": "Add Patient"
+            }
+          ]
+        }
+      },
+      "name": "Check Action Type",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "=http://localhost:5678/webhook/patient-update",
+        "method": "POST",
+        "body": "={\n  \"firstName\": \"={{$json.patientFirstName}}\",\n  \"lastName\": \"={{$json.patientLastName}}\",\n  \"email\": \"={{$json.patientEmail}}\",\n  \"phone\": \"={{$json.patientPhone}}\",\n  \"notes\": \"={{$json.patientNotes}}\"\n}"
+      },
+      "name": "Process Patient",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 150]
+    },
+    {
+      "parameters": {
+        "url": "=http://localhost:5678/webhook/schedule-appointment",
+        "method": "POST",
+        "body": "={\n  \"patientId\": \"={{$json.patientId}}\",\n  \"doctorName\": \"={{$json.doctorName}}\",\n  \"appointmentDate\": \"={{$json.appointmentDate}}\",\n  \"appointmentTime\": \"={{$json.appointmentTime}}\"\n}"
+      },
+      "name": "Process Appointment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 350]
+    },
+    {
+      "parameters": {
+        "url": "=http://localhost:5678/webhook/send-communication",
+        "method": "POST",
+        "body": "={\n  \"patientId\": \"={{$json.patientId}}\",\n  \"communicationChannel\": \"={{$json.communicationChannel}}\",\n  \"message\": \"={{$json.messageContent}}\"\n}"
+      },
+      "name": "Process Communication",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 550]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "status",
+              "value": "success"
+            },
+            {
+              "name": "message",
+              "value": "={{$json}}"
+            }
+          ]
+        }
+      },
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "html": "=<h2>Request Processed Successfully</h2>\n<p>Your submission has been processed and the healthcare system has been updated.</p>\n<p>Details: {{$json.message}}</p>"
+      },
+      "name": "Send Confirmation",
+      "type": "n8n-nodes-base.respondWithForm",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    }
+  ],
+  "connections": {
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Configure Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configure Form": {
+      "main": [
+        [
+          {
+            "node": "Check Action Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Action Type": {
+      "main": [
+        [
+          {
+            "node": "Process Patient",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Process Appointment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Process Communication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Patient": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Appointment": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Communication": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
